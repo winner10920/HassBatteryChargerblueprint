@@ -45,35 +45,22 @@ trigger:
   - platform: numeric_state
     entity_id: !input battery_entity
     above: !input high_threshold
+    id: high_threshold
   - platform: numeric_state
     entity_id: !input battery_entity
     below: !input low_threshold
+    id: low_threshold
 condition: []
 action:
   - choose:
-      - conditions:
-          - condition: template
-            value_template: >
-              {{ states(trigger.entity_id) | float(0) >= states(trigger.entity_id) | float(0) or 
-                 (trigger.to_state.state | float(0)) >= (trigger.from_state.state | float(0)) }}
-          - condition: template
-            value_template: >
-              {{ states(trigger.entity_id) | float(0) >= (states('input_number.battery_high_threshold') | float(0)) }}
-      - conditions:
-          - condition: template
-            value_template: >
-              {{ states(trigger.entity_id) | float(0) <= (states('input_number.battery_low_threshold') | float(0)) }}
-      - service: switch.turn_off
-        target:
-          entity_id: !input switches_to_turn_off
-    default: []
-  - choose:
-      - conditions:
-          - condition: template
-            value_template: >
-              {{ states(trigger.entity_id) | float(0) <= (states('input_number.battery_low_threshold') | float(0)) }}
-      - service: switch.turn_on
-        target:
-          entity_id: !input switches_to_turn_on
-    default: []
+      - conditions: "{{ trigger.id == 'high_threshold' }}"
+        sequence:
+          - service: switch.turn_off
+            target:
+              entity_id: !input switches_to_turn_off
+      - conditions: "{{ trigger.id == 'low_threshold' }}"
+        sequence:
+          - service: switch.turn_on
+            target:
+              entity_id: !input switches_to_turn_on
 mode: single
