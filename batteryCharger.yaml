@@ -53,12 +53,12 @@ trigger:
 condition: []
 action:
   - choose:
-      - conditions: "{{ trigger.id => 'high_threshold' }}"
+      - conditions: "{{ trigger.id == 'high_threshold' }}"
         sequence:
           - service: switch.turn_off
             target:
               entity_id: !input switches_to_turn_off
-      - conditions: "{{ trigger.id => 'low_threshold' }}"
+      - conditions: "{{ trigger.id == 'low_threshold' }}"
         sequence:
           - service: switch.turn_on
             target:
