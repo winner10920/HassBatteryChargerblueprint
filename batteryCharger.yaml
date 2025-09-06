@@ -1,0 +1,79 @@
+blueprint:
+  name: Battery Level Switch Controller
+  description: A blueprint to turn on or off a set of switches based on a device's battery level crossing a high or low threshold.
+  domain: automation
+  input:
+    battery_entity:
+      name: Battery Level Sensor
+      description: The sensor entity for the device's battery level (e.g., sensor.richs_phone_battery).
+      selector:
+        entity:
+          domain: sensor
+    low_threshold:
+      name: Low Battery Threshold
+      description: The percentage at which to turn on the switches. The action will be triggered when the battery drops below this value.
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          mode: slider
+    high_threshold:
+      name: High Battery Threshold
+      description: The percentage at which to turn off the switches. The action will be triggered when the battery rises above this value.
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          mode: slider
+    switches_to_turn_on:
+      name: Switches to Turn On
+      description: Select the switches that should be turned on when the battery level is low.
+      selector:
+        entity:
+          domain: switch
+          multiple: true
+    switches_to_turn_off:
+      name: Switches to Turn Off
+      description: Select the switches that should be turned off when the battery level is high.
+      selector:
+        entity:
+          domain: switch
+          multiple: true
+trigger:
+  - platform: numeric_state
+    entity_id: !input battery_entity
+    above: !input high_threshold
+  - platform: numeric_state
+    entity_id: !input battery_entity
+    below: !input low_threshold
+condition: []
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ states(trigger.entity_id) | float(0) >= states(trigger.entity_id) | float(0) or 
+                 (trigger.to_state.state | float(0)) >= (trigger.from_state.state | float(0)) }}
+          - condition: template
+            value_template: >
+              {{ states(trigger.entity_id) | float(0) >= (states('input_number.battery_high_threshold') | float(0)) }}
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ states(trigger.entity_id) | float(0) <= (states('input_number.battery_low_threshold') | float(0)) }}
+      - service: switch.turn_off
+        target:
+          entity_id: !input switches_to_turn_off
+    default: []
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >
+              {{ states(trigger.entity_id) | float(0) <= (states('input_number.battery_low_threshold') | float(0)) }}
+      - service: switch.turn_on
+        target:
+          entity_id: !input switches_to_turn_on
+    default: []
+mode: single
