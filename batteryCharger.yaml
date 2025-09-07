@@ -50,7 +50,6 @@ trigger:
     entity_id: !input battery_entity
     below: !input low_threshold
     id: low_threshold
-condition: []
 action:
   - choose:
       - conditions: "{{ trigger.id == 'high_threshold' }}"
